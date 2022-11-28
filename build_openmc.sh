@@ -11,6 +11,18 @@
 # e.g., "./build_openmc.sh all" or "./build_openmc.sh performance"
 ####################################################################
 
+# Check for command line arguments
+if [ $# -eq 0 ]; then
+ echo "Command line options:
+ all - Does all basic steps (download + compile + validate)
+ download - only downloads data files
+ compile - only compiles (deletes old build and install first)
+ validate - runs a small test problem and checks for correctness
+ performance - runs a large test problem and reports performance
+ e.g., \"./build_openmc.sh all\" or \"./build_openmc.sh performance\""
+ exit 1
+fi
+
 ####################################################################
 # START PREAMBLE
 # NOTE - You may need to edit this section to point to or load
@@ -24,7 +36,7 @@ module load cmake
 module load hdf5 # If you have manually compiled HDF5, set HDF5_ROOT
 
 # Compiler dependency (llvm, oneapi)
-module load llvm
+module load llvm/sep1_patched
 
 # Target selection (full list in OpenMC's main directory
 # CmakePrests.json file at:
@@ -35,7 +47,7 @@ OPENMC_TARGET=llvm_a100
 # If you are compiling for NVIDIA or Intel, you may want to enable
 # use of a vendor library to accelerate particle sorting. No sorting
 # implementation exists yet for AMD in OpenMC.
-OPENMC_NVIDIA_SORT=off
+OPENMC_NVIDIA_SORT=on
 OPENMC_INTEL_SORT=off
 
 ####################################################################
@@ -67,9 +79,10 @@ fi
 
 if [ "$1" = "all" ] || [ "$1" = "compile" ]; then
 
-# Compile OpenMC
+# Create directories and delete old build/install
 cd openmc
-git checkout openmp-target-offload
+rm -rf build
+rm -rf install
 mkdir build
 mkdir install
 cd build
@@ -93,6 +106,7 @@ if [ "$1" = "all" ] || [ "$1" = "validate" ]; then
 cd ${TEST_DIR}/openmc_offloading_benchmarks/progression_tests/small
 
 TEST_LOG=log.txt
+rm ${TEST_LOG}
 
 # Program Launch
 openmc --event &>> ${TEST_LOG}
@@ -104,7 +118,7 @@ echo "Test Result     = "${TEST_RESULT}
 echo "Expected Result = "${EXPECTED_RESULT}
 
 # Finish Result Validation
-exit [ "$TEST_RESULT" == "$EXPECTED_RESULT" ]
+[ "$TEST_RESULT" == "$EXPECTED_RESULT" ]
 
 fi
 
@@ -119,6 +133,7 @@ if [ "$1" = "performance" ]; then
 cd ${TEST_DIR}/openmc_offloading_benchmarks/progression_tests/XXL
 
 TEST_LOG=log.txt
+rm ${TEST_LOG}
 
 # Program Launch
 openmc --event &>> ${TEST_LOG}
