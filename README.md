@@ -22,11 +22,15 @@ everything from scratch, then you should run the script as:
 
 ## Step 3
 
-Once step 2 is complete, you should run the script as:
+If step 2 completes and validation passes, then you can begin testing
+a larger, more realistic problem via:
 
 ```
 ./build_openmc.sh performance
 ```
+
+Which will run the Hoogenboom-Martin "large" depleted fuel reactor benchmark.
+
 
 ## Additional Options
 
@@ -34,5 +38,6 @@ Command line options:
 - all: Does all basic steps (download + compile + validate)
 - download: only downloads data files
 - compile: only compiles (deletes old build and install first)
+- small: runs a small test problem
 - validate: runs a small test problem and checks for correctness
 - performance: runs a large test problem and reports performance
