@@ -18,7 +18,7 @@ fi
 ####################################################################
 # START PREAMBLE
 # NOTE - You may need to edit this section to point to or load
-# your specific dependencies (HDF5, CMake, and an OpenMP compiler)
+# your specific dependencies (HDF5, CMake, and an OpenMP compiler),
 # and to select which offloading target you want.
 ####################################################################
 
@@ -27,13 +27,14 @@ module load spack
 module load cmake
 module load hdf5
 
-# Note -If you have manually compiled HDF5, set the HDF5_ROOT
+# Note - If you have manually compiled HDF5, set the HDF5_ROOT
 # environment variable to your install location
 
 # Compiler dependency (llvm, oneapi)
-module load llvm/sep1_patched
+# On the Argonne JLSE cluster, use "module load llvm/master-nightly"
+module load llvm
 
-# Target selection (full list in OpenMC's main directory
+# GPU target/compiler selection (full list in OpenMC's main directory
 # CmakePrests.json file at:
 # https://github.com/exasmr/openmc/blob/openmp-target-offload/CMakePresets.json)
 # (some options are llvm_a100, llvm_v100, llvm_mi100, llvm_mi250x, spirv_aot)
@@ -45,7 +46,7 @@ OPENMC_TARGET=llvm_a100
 OPENMC_NVIDIA_SORT=off
 OPENMC_INTEL_SORT=off
 
-# Enable debugging line information (-gline-tables-only)
+# Enable compiler debugging line information (-gline-tables-only)
 OPENMC_DEBUG_LINE_INFO=off
 
 ####################################################################
@@ -119,7 +120,7 @@ if [ "$1" = "all" ] || [ "$1" = "validate" ]; then
 cd ${TEST_DIR}/openmc_offloading_benchmarks/progression_tests/small
 
 TEST_LOG=log.txt
-rm ${TEST_LOG}
+rm -f ${TEST_LOG}
 
 # Program Launch
 openmc --event &>> ${TEST_LOG}
@@ -160,7 +161,7 @@ echo "Test Result     = "${TEST_RESULT}
 echo "Expected Result = "${EXPECTED_RESULT}
 
 # Compute FOM
-FOM=$(cat ${TEST_LOG} | grep "(active" | cut -d '=' -f 2 | cut -d 'p' -f 1 | cut -d ' ' -f 2 | xargs)
+FOM=$(cat ${TEST_LOG} | grep "(inactive" | cut -d '=' -f 2 | cut -d 'p' -f 1 | cut -d ' ' -f 2 | xargs)
 echo "FOM = "${FOM}" particles/sec"
 
 # Finish Result Validation
