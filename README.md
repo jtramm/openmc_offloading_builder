@@ -1,4 +1,12 @@
-# Build Script for OpenMP Target GPU Offloading Version of OpenMC
+## What this script does
+
+This script is capable of downloading the OpenMC source, a set of 
+OpenMC data files required to run simulations, and a small repository
+of benchmarks for testing the OpenMP offloading capabilities of OpenMC on GPU.
+The script is also capable of compiling OpenMC and running a few different simulation
+problems, some with validation capabilites to ensure that it is working.
+
+Specific instructions for using this script are given below
 
 ## Step 1
 
