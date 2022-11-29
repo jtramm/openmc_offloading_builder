@@ -9,7 +9,9 @@ You need to edit the preamble of the script to solve for OpenMC's dependencies:
 - An OpenMP offloading compiler
 
 The script is self-documenting in where/how to do this. By default, the script
-will assume you have HDF5 and CMake installations through spack.
+will assume you have HDF5 and CMake installations through spack. If you need
+more help or info regarding these dependencies, see OpenMC's main installation
+documentation: https://docs.openmc.org/en/stable/usersguide/install.html#prerequisites
 
 ## Step 2
 
@@ -19,6 +21,9 @@ everything from scratch, then you should run the script as:
 ```
 ./build_openmc.sh all
 ```
+
+By default, this will download/install everything in the directory where the script
+was run from.
 
 ## Step 3
 
