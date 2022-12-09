@@ -48,12 +48,12 @@ Which will run the Hoogenboom-Martin "large" depleted fuel reactor benchmark.
 ## Additional Options
 
 Command line options:
-- all: Does all basic steps (download + compile + validate)
-- download: only downloads data files
-- compile: only compiles (deletes old build and install first)
-- small: runs a small test problem
-- validate: runs a small test problem and checks for correctness
-- performance: runs a large test problem and reports performance
+- `all`: Does all basic steps (download + compile + validate)
+- `download`: only downloads data files
+- `compile`: only compiles (deletes old build and install first)
+- `small`: runs a small test problem
+- `validate`: runs a small test problem and checks for correctness
+- `performance`: runs a large test problem and reports performance
 
 ## What the `build_llvm.sh` script does
 
