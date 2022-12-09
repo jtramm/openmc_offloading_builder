@@ -1,4 +1,4 @@
-## What this script does
+## What the `build_openmc.sh` script does
 
 This script is capable of downloading the OpenMC source, a set of 
 OpenMC data files required to run simulations, and a small repository
@@ -54,3 +54,15 @@ Command line options:
 - small: runs a small test problem
 - validate: runs a small test problem and checks for correctness
 - performance: runs a large test problem and reports performance
+
+## What the `build_llvm.sh` script does
+
+In the event that you do not have LLVM Clang installed (or your install was
+was not built with OpenMP offloading support) this script will allow you to
+compile LLVM from source with the needed build options.
+
+The script contains some notes regarding a few areas you'll need to edit
+to update install locations for your system.
+
+The script also contains info on what environment variables need to be set
+to add LLVM to your environment, along with an example modulefile.
