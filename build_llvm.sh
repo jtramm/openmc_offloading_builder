@@ -24,15 +24,18 @@ module load cmake
 PACKAGES="clang;compiler-rt;lld"
 RUNTIMES="libcxxabi;libcxx;openmp"
 
-# This script will make two folders in the current directly: llvm-build
+# This script will make two folders in the current directly: llvm-build, llvm-install
 rm -rf llvm-build
 mkdir llvm-build
+
+rm -rf llvm-install
+mkdir llvm-install
+
 cd llvm-build
 
-# Edit the DCMAKE_INSTALL_PREFIX part of the line below to point to where you want it to install
 cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
     -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_INSTALL_PREFIX=/gpfs/jlse-fs0/users/jtramm/compilers/llvm-install \
+    -DCMAKE_INSTALL_PREFIX=../llvm-install \
     -DLLVM_ENABLE_BACKTRACES=ON \
     -DLLVM_ENABLE_WERROR=OFF \
     -DBUILD_SHARED_LIBS=OFF \
