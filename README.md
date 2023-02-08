@@ -13,10 +13,15 @@ Specific instructions for using this script are given below
 You need to edit the preamble of the script to solve for OpenMC's dependencies:
 
 - HDF5
-- CMake
+- CMake version 3.22 or newer
 - An OpenMP offloading compiler
+  - LLVM Clang version 16 RC1 or newer (see build_llvm.sh section below for instructions on how to compile/install this if needed)
+  - Intel OneAPI SDK version 2023.1.0 (2023.x.0.20221013) or newer
+  - Other compilers (GCC, AMD AOMP, HPE/Cray, IBM, Nvidia NVHPC) have bugs preventing OpenMC from working with them currently.
+- For running on NVIDIA GPUs, CUDA SDK 11.0 or newer
+- For running on AMD GPUs, rocm 5.4 or newer 
 
-The script is self-documenting in where/how to do this. By default, the script
+The script is self-documenting in where/how to do edit the script to declare your specific dependency solutions. By default, the script
 will assume you have HDF5 and CMake installations through spack. If you need
 more help or info regarding these dependencies, see OpenMC's main installation
 documentation: https://docs.openmc.org/en/stable/usersguide/install.html#prerequisites
