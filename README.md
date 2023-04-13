@@ -71,3 +71,7 @@ to update install locations for your system.
 
 The script also contains info on what environment variables need to be set
 to add LLVM to your environment, along with an example modulefile.
+
+## Additional machine-specific scripts
+
+There are also scripts available in this repository for compiling on several specific supercomputers. These are provided to make it easier for people to know which modules to load on these systems, and to know how to launch OpenMC in its optimal configuration at scale.
