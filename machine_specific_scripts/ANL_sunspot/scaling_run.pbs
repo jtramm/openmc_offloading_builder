@@ -1,0 +1,75 @@
+#!/bin/bash
+
+#PBS -l select=1:system=sunspot,place=scatter
+#PBS -A Aurora_deployment
+#PBS -q debug
+#PBS -l walltime=00:15:00
+#PBS -N openmc_scaling
+
+###############################################################
+# SETTINGS 
+###############################################################
+
+# To control the total number of nodes, adjust the "select=1"
+# part above to specify total number of sunspot nodes
+
+# A single node on Sunspot is composed of six PVC GPUs, each featuring two NUMA "tiles".
+# To use the full resources of each Sunspot node, we want to run on all 12 tiles.
+NTILES=12
+
+# On PVC, it is optimal to run 4 MPI ranks for each PVC tile
+NRANKSPERTILE=4
+
+# Number of particles to run per MPI rank
+NPARTICLESPERRANK=10000000
+
+# NOTE: you need to run this script from the directory
+# where an OpenMC problem exists, with accompanying:
+# settings.xml
+# materials.xml
+# geometry.xml
+# tallies.xml (not always required for all problems)
+
+# Load your compiled OpenMC into your environment. The below
+# method will load a pre-installed version of OpenMC on
+# sunspot.
+module use /home/jtramm/Modules/modulefiles/
+module load openmc/working
+
+###############################################################
+# SETTINGS END
+###############################################################
+
+export OMP_TARGET_OFFLOAD=MANDATORY
+export IGC_ForceOCLSIMDWidth=16  # Does appear to have a minor affect (about 3%) on 1 rank/tile
+unset LIBOMPTARGET_LEVEL_ZERO_COMMAND_BATCH
+export LIBOMPTARGET_LEVEL_ZERO_USE_IMMEDIATE_COMMAND_LIST=1
+export CFESingleSliceDispatchCCSMode=1 
+export LIBOMPTARGET_DEVICES=SUBSUBDEVICE 
+
+export TZ='/usr/share/zoneinfo/US/Central'
+export OMP_PROC_BIND=spread
+export OMP_NUM_THREADS=1
+unset OMP_PLACES
+
+ulimit -c 0
+
+echo Jobid: $PBS_JOBID
+echo Running on host `hostname`
+echo Running on nodes `cat $PBS_NODEFILE`
+
+NNODES=`wc -l < $PBS_NODEFILE`
+NRANKS=$(( NTILES * NRANKS_PER_TILE ))          # Number of MPI ranks per node
+NDEPTH=1          # Number of hardware threads per rank, spacing between MPI ranks on a node
+NTHREADS=$OMP_NUM_THREADS # Number of OMP threads per rank, given to OMP_NUM_THREADS
+
+NTOTRANKS=$(( NNODES * NRANKS ))
+
+echo "NUM_NODES=${NNODES}  TOTAL_RANKS=${NTOTRANKS}  RANKS_PER_NODE=${NRANKS}  THREADS_PER_RANK=${OMP_NUM_THREADS}"
+echo "OMP_PROC_BIND=$OMP_PROC_BIND OMP_PLACES=$OMP_PLACES"
+
+NPARTICLES=$(( $NTOTRANKS * $NPARTICLESPERRANK ))
+
+#mpiexec -np ${NTOTRANKS} -ppn ${NRANKS} -d ${NDEPTH} --cpu-bind depth -envall /home/jtramm/core-fom-depleted/scaling_launch.sh ${NPARTICLES}
+#mpiexec -np ${NTOTRANKS} -ppn ${NRANKS} -d ${NDEPTH} --cpu-bind=verbose,list:2:3:4:5:6:7:8:9:10:11:12:13:14:15:16:17:18:19:20:21:22:23:24:25:57:58:59:60:61:62:63:64:65:66:67:68:69:70:71:72:73:74:75:76:77:78:79:80 -envall /home/jtramm/core-fom-depleted/scaling_launch.sh ${NPARTICLES}
+mpiexec -np ${NTOTRANKS} -ppn ${NRANKS} -d ${NDEPTH} --cpu-bind=verbose,list:2:3:4:5:6:7:8:9:10:11:12:13:14:15:16:17:18:19:20:21:22:23:24:25:57:58:59:60:61:62:63:64:65:66:67:68:69:70:71:72:73:74:75:76:77:78:79:80 -envall ./scaling_launch.sh ${NPARTICLES} ${NRANKSPERTILE}
