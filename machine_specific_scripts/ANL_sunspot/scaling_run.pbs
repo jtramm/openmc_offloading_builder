@@ -59,7 +59,7 @@ echo Running on host `hostname`
 echo Running on nodes `cat $PBS_NODEFILE`
 
 NNODES=`wc -l < $PBS_NODEFILE`
-NRANKS=$(( NTILES * NRANKS_PER_TILE ))          # Number of MPI ranks per node
+NRANKS=$(( NTILES * NRANKSPERTILE ))          # Number of MPI ranks per node
 NDEPTH=1          # Number of hardware threads per rank, spacing between MPI ranks on a node
 NTHREADS=$OMP_NUM_THREADS # Number of OMP threads per rank, given to OMP_NUM_THREADS
 
