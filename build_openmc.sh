@@ -41,10 +41,11 @@ module load llvm
 OPENMC_TARGET=llvm_a100
 
 # If you are compiling for NVIDIA or Intel, you may want to enable
-# use of a vendor library to accelerate particle sorting. No sorting
-# implementation exists yet for AMD in OpenMC. (Set to on/off).
+# use of a vendor library to accelerate particle sorting.
+# (Set to on/off).
 OPENMC_NVIDIA_SORT=off
 OPENMC_INTEL_SORT=off
+OPENMC_AMD_SORT=off
 
 # Enable compiler debugging line information (-gline-tables-only)
 OPENMC_DEBUG_LINE_INFO=off
@@ -85,7 +86,7 @@ rm -rf install
 mkdir build
 mkdir install
 cd build
-cmake --preset=${OPENMC_TARGET} -DCMAKE_INSTALL_PREFIX=../install -Doptimize=on -Ddevice_printf=off -Ddebug=${OPENMC_DEBUG_LINE_INFO} -Dcuda_thrust_sort=${OPENMC_NVIDIA_SORT} -Dsycl_sort=${OPENMC_INTEL_SORT} ..
+cmake --preset=${OPENMC_TARGET} -DCMAKE_INSTALL_PREFIX=../install -Doptimize=on -Ddevice_printf=off -Ddebug=${OPENMC_DEBUG_LINE_INFO} -Dcuda_thrust_sort=${OPENMC_NVIDIA_SORT} -Dsycl_sort=${OPENMC_INTEL_SORT} -Dhip_thrust_sort=${OPENMC_AMD_SORT} ..
 make VERBOSE=1 install
 
 fi
