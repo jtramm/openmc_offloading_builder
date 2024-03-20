@@ -76,8 +76,8 @@ if [ $# -eq 2 ]; then
   INSTALL_DIR=$2
 fi
 
-# Regular expression for alphanumeric characters
-regex='^[a-zA-Z0-9]+$'
+# Regular expression for alphanumeric characters, including underscore and dash
+regex='^[a-zA-Z0-9_-]+$'
 
 # Check if input is alphanumeric
 if ! [[ $INSTALL_DIR =~ $regex ]]; then
