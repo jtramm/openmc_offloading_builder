@@ -60,6 +60,34 @@ Command line options:
 - `validate`: runs a small test problem and checks for correctness
 - `performance`: runs a large test problem and reports performance
 
+Note that you can also optionally pass a second argument specifying
+a unique name for the openmc install. This allows for multiple installs
+to exist at once, for instance if testing the performance of different
+versions of OpenMC or different versions of compilers.
+
+
+For those interested in varying the compiler commands passed to
+cmake, it is recommended to directly edit the CMakePresets.json file
+to alter an existing preset to your needs or to add another preset
+(perhaps one that inherits from an existing one).
+
+Alternatively, you can also overwrite the CMakePresets.json preset
+via definition of the following optional varbiables:
+
+- `OPENMC_CXX_FLAGS`
+
+- `OPENMC_LD_FLAGS`
+
+For instance, one may wish to run the script as:
+
+`OPENMC_CXX_FLAGS="-mllvm -scalar-evolution-infer-max-trip-count-from-memory-access=1" OPENMC_LD_FLAGS="-fuse-ld=lld" ./build_openmc.sh compile experimental_flags`
+
+However, it is important to note that these flags are not being appended to the preset flags, rather, they are overwriting them. Thus, in the above example,
+one would lose the standard offloading flags for that architecture. You would need to locate the desired preset you wanted to append to in CMakePresets.json
+and be sure to include those commands in your definitions. For example, a full redfinition for llvm native with the new flags appended might look like:
+
+`OPENMC_CXX_FLAGS="-Dgsl_CONFIG_CONTRACT_CHECKING_OFF -Wno-tautological-constant-compare -Wno-openmp-mapping -fopenmp -fopenmp-cuda-mode --offload-arch=native -mllvm -scalar-evolution-infer-max-trip-count-from-memory-access=1" OPENMC_LD_FLAGS="-fuse-ld=lld" ./build_openmc.sh compile experimental_flags`
+
 ## What the `build_llvm.sh` script does
 
 In the event that you do not have LLVM Clang installed (or your install was

@@ -25,7 +25,7 @@ fi
 ####################################################################
 
 # HDF5 and CMake dependencies
-#module load spack
+module load spack
 module load cmake
 module load hdf5
 
@@ -34,12 +34,13 @@ module load hdf5
 
 # Compiler dependency (llvm, oneapi)
 # On the Argonne JLSE cluster, use "module load llvm/master-nightly"
-module load llvm/patch
+module load llvm
 
 # GPU target/compiler selection (full list in OpenMC's main directory
 # CmakePrests.json file at:
 # https://github.com/exasmr/openmc/blob/openmp-target-offload/CMakePresets.json)
 # (some options are llvm_a100, llvm_v100, llvm_mi100, llvm_mi250x, spirv_aot)
+# llvm_native will attempt to build for any GPUs detected on the node
 OPENMC_TARGET=llvm_native
 
 # If you are compiling for NVIDIA or Intel, you may want to enable
