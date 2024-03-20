@@ -4,14 +4,16 @@
 # Check for command line argument
 
 if [ $# -eq 0 ]; then
- echo "Command line options:
- all - Does all basic steps (download + compile + small + validate)
- download - only downloads data files
- compile - only compiles (deletes old build and install first)
- validate - runs a small test problem and checks for correctness
- small - runs a small test problem
- performance - runs a large test problem and reports performance
- e.g., \"./build_openmc.sh all\" or \"./build_openmc.sh performance\""
+ echo "Usage: ./build_openmc.sh <mode> <name (optional)>
+ modes:
+   all - Does all basic steps (download + compile + small + validate)
+   download - only downloads data files
+   compile - only compiles (deletes old build and install first)
+   validate - runs a small test problem and checks for correctness
+   small - runs a small test problem
+   performance - runs a large test problem and reports performance
+ e.g., \"./build_openmc.sh all\" or \"./build_openmc.sh performance may_21\"
+ Set OPENMC_LD_FLAGS and/or OPENMC_CXX_FLAGS if you want to append anything"
  exit 1
 fi
 
@@ -38,7 +40,7 @@ module load llvm
 # CmakePrests.json file at:
 # https://github.com/exasmr/openmc/blob/openmp-target-offload/CMakePresets.json)
 # (some options are llvm_a100, llvm_v100, llvm_mi100, llvm_mi250x, spirv_aot)
-OPENMC_TARGET=llvm_a100
+OPENMC_TARGET=llvm_native
 
 # If you are compiling for NVIDIA or Intel, you may want to enable
 # use of a vendor library to accelerate particle sorting.
@@ -54,7 +56,31 @@ OPENMC_DEBUG_LINE_INFO=off
 # END PREAMBLE
 ####################################################################
 
+####################################################################
+# Ensure input install name is valid
+
 TEST_DIR=$PWD
+INSTALL_DIR=install
+if [ $# -eq 2 ]; then
+  INSTALL_DIR=$2
+fi
+
+# Regular expression for alphanumeric characters
+regex='^[a-zA-Z0-9]+$'
+
+# Check if input is alphanumeric
+if ! [[ $INSTALL_DIR =~ $regex ]]; then
+    echo "Error: Install name must be alphanumeric."
+    exit 2
+fi
+
+# Check if the input starts with a '/'
+if [[ $INSTALL_DIR == /* ]]; then
+    echo "Error: Install name must not be an absolute path."
+    exit 3
+fi
+
+echo "Install Name: $INSTALL_DIR"
 
 ####################################################################
 # Downloads
@@ -79,14 +105,39 @@ fi
 
 if [ "$1" = "all" ] || [ "$1" = "compile" ]; then
 
+# First, we check if the install dir already exists, and confirm that 
+# the user actually wants to overwrite this
+if [ -d "$INSTALL_DIR" ]; then
+echo "This operation will delete then overwrite the directory '${TEST_DIR}'/openmc/'${INSTALL_DIR}'? This action cannot be undone. Type 'yes' to confirm:"
+read confirmation
+if [ "$confirmation" != "yes" ]; then
+    echo "Deletion aborted."
+    exit 4
+fi
+fi
+
 # Create directories and delete old build/install
 cd openmc
 rm -rf build
-rm -rf install
+rm -rf ${INSTALL_DIR}
 mkdir build
-mkdir install
+mkdir ${INSTALL_DIR}
 cd build
-cmake --preset=${OPENMC_TARGET} -DCMAKE_INSTALL_PREFIX=../install -Doptimize=on -Ddevice_printf=off -Ddebug=${OPENMC_DEBUG_LINE_INFO} -Dcuda_thrust_sort=${OPENMC_NVIDIA_SORT} -Dsycl_sort=${OPENMC_INTEL_SORT} -Dhip_thrust_sort=${OPENMC_AMD_SORT} ..
+
+# Run cmake
+cmake --preset=${OPENMC_TARGET}             \
+-DCMAKE_INSTALL_PREFIX=../${INSTALL_DIR}    \
+-Doptimize=on                               \
+-Ddevice_printf=off                         \
+-Ddebug=${OPENMC_DEBUG_LINE_INFO}           \
+-Dcuda_thrust_sort=${OPENMC_NVIDIA_SORT}    \
+-Dsycl_sort=${OPENMC_INTEL_SORT}            \
+-Dhip_thrust_sort=${OPENMC_AMD_SORT}        \
+-DCMAKE_CXX_FLAGS=${OPENMC_CXX_FLAGS}       \
+-DCMAKE_EXE_LINKER_FLAGS=${OPENMC_LD_FLAGS} \
+-DCMAKE_MODULE_LINKER_FLAGS=${OPENMC_LD_FLAGS}  ..
+
+# compile and install
 make VERBOSE=1 install
 
 fi
@@ -94,8 +145,8 @@ fi
 ####################################################################
 # Setup OpenMC Environment
 
-export LD_LIBRARY_PATH=${TEST_DIR}/openmc/install/lib64:$LD_LIBRARY_PATH
-export PATH=${TEST_DIR}/openmc/install/bin:$PATH
+export LD_LIBRARY_PATH=${TEST_DIR}/openmc/${INSTALL_DIR}/lib64:$LD_LIBRARY_PATH
+export PATH=${TEST_DIR}/openmc/${INSTALL_DIR}/bin:$PATH
 export OPENMC_CROSS_SECTIONS=${TEST_DIR}/nndc_hdf5/cross_sections.xml
 export OMP_TARGET_OFFLOAD=MANDATORY
 
