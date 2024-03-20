@@ -25,7 +25,7 @@ fi
 ####################################################################
 
 # HDF5 and CMake dependencies
-module load spack
+#module load spack
 module load cmake
 module load hdf5
 
@@ -34,7 +34,7 @@ module load hdf5
 
 # Compiler dependency (llvm, oneapi)
 # On the Argonne JLSE cluster, use "module load llvm/master-nightly"
-module load llvm
+module load llvm/patch
 
 # GPU target/compiler selection (full list in OpenMC's main directory
 # CmakePrests.json file at:
@@ -56,8 +56,18 @@ OPENMC_DEBUG_LINE_INFO=off
 # END PREAMBLE
 ####################################################################
 
+
 ####################################################################
-# Ensure input install name is valid
+# Ensure input is valid
+
+MODE=$1
+
+# Check if the mode is valid
+if [[ "$MODE" != "all" && "$MODE" != "download" && "$MODE" != "compile" && "$MODE" != "validate" && "$MODE" != "small" && "$MODE" != "performance" ]]; then
+    echo "Error: Invalid mode '$MODE'."
+    usage
+    exit 2
+fi
 
 TEST_DIR=$PWD
 INSTALL_DIR=install
@@ -85,7 +95,7 @@ echo "Install Name: $INSTALL_DIR"
 ####################################################################
 # Downloads
 
-if [ "$1" = "all" ] || [ "$1" = "download" ]; then
+if [ "$MODE" = "all" ] || [ "$MODE" = "download" ]; then
 
 # Clone OpenMC source
 git clone --recursive https://github.com/exasmr/openmc.git
@@ -103,12 +113,12 @@ fi
 ####################################################################
 # Compilation
 
-if [ "$1" = "all" ] || [ "$1" = "compile" ]; then
+if [ "$MODE" = "all" ] || [ "$MODE" = "compile" ]; then
 
 # First, we check if the install dir already exists, and confirm that 
 # the user actually wants to overwrite this
-if [ -d "$INSTALL_DIR" ]; then
-echo "This operation will delete then overwrite the directory '${TEST_DIR}'/openmc/'${INSTALL_DIR}'? This action cannot be undone. Type 'yes' to confirm:"
+if [ -d "openmc/$INSTALL_DIR" ]; then
+echo "This operation will delete then overwrite the install at '${TEST_DIR}/openmc/${INSTALL_DIR}'? Type 'yes' to confirm:"
 read confirmation
 if [ "$confirmation" != "yes" ]; then
     echo "Deletion aborted."
@@ -124,18 +134,33 @@ mkdir build
 mkdir ${INSTALL_DIR}
 cd build
 
-# Run cmake
-cmake --preset=${OPENMC_TARGET}             \
--DCMAKE_INSTALL_PREFIX=../${INSTALL_DIR}    \
--Doptimize=on                               \
--Ddevice_printf=off                         \
--Ddebug=${OPENMC_DEBUG_LINE_INFO}           \
--Dcuda_thrust_sort=${OPENMC_NVIDIA_SORT}    \
--Dsycl_sort=${OPENMC_INTEL_SORT}            \
--Dhip_thrust_sort=${OPENMC_AMD_SORT}        \
--DCMAKE_CXX_FLAGS=${OPENMC_CXX_FLAGS}       \
--DCMAKE_EXE_LINKER_FLAGS=${OPENMC_LD_FLAGS} \
--DCMAKE_MODULE_LINKER_FLAGS=${OPENMC_LD_FLAGS}  ..
+# Initialize the base cmake command
+cmake_cmd="cmake                         \
+--preset=${OPENMC_TARGET}                \
+-DCMAKE_INSTALL_PREFIX=../${INSTALL_DIR} \
+-Doptimize=on                            \
+-Ddevice_printf=off                      \
+-Ddebug=${OPENMC_DEBUG_LINE_INFO}        \
+-Dcuda_thrust_sort=${OPENMC_NVIDIA_SORT} \
+-Dsycl_sort=${OPENMC_INTEL_SORT}         \
+-Dhip_thrust_sort=${OPENMC_AMD_SORT}"
+
+# Check if OPENMC_CXX_FLAGS is set and not empty
+if [ ! -z "${OPENMC_CXX_FLAGS}" ]; then
+    # Append CXX flags to the cmake command
+    echo -e "\033[31mWARNING: OPENMC_CXX_FLAGS has been set. This overwrites CMakePresets.json commands for ${OPENMC_TARGET}, so you will need to manually include them in your redefinition.\033[0m "
+    cmake_cmd+=" -DCMAKE_CXX_FLAGS=\"${OPENMC_CXX_FLAGS}\""
+fi
+
+# Check if OPENMC_LD_FLAGS is set and not empty
+if [ ! -z "${OPENMC_LD_FLAGS}" ]; then
+    # Append linker flags to the cmake command
+    echo -e "\033[31mWARNING: OPENMC_LD_FLAGS has been set. This overwrites CMakePresets.json commands for ${OPENMC_TARGET}, so you will need to manually include them in your redefinition.\033[0m "
+    cmake_cmd+=" -DCMAKE_EXE_LINKER_FLAGS=\"${OPENMC_LD_FLAGS}\" -DCMAKE_MODULE_LINKER_FLAGS=\"${OPENMC_LD_FLAGS}\""
+fi
+
+# Finally, run the cmake command with optionally added flags
+eval $cmake_cmd ..
 
 # compile and install
 make VERBOSE=1 install
@@ -153,7 +178,7 @@ export OMP_TARGET_OFFLOAD=MANDATORY
 ####################################################################
 # Small (runs a small test problem)
 
-if [ "$1" = "all" ] || [ "$1" = "small" ]; then
+if [ "$MODE" = "all" ] || [ "$MODE" = "small" ]; then
 
 # Select small benchmark problem
 cd ${TEST_DIR}/openmc_offloading_benchmarks/progression_tests/small
@@ -166,7 +191,7 @@ fi
 ####################################################################
 # Validation (runs a small test problem and checks for correctness)
 
-if [ "$1" = "all" ] || [ "$1" = "validate" ]; then
+if [ "$MODE" = "all" ] || [ "$MODE" = "validate" ]; then
 
 # Select small benchmark problem
 cd ${TEST_DIR}/openmc_offloading_benchmarks/progression_tests/small
@@ -194,7 +219,7 @@ fi
 # Runs a larger performance oriented test for benchmarking, checks
 # for correctness, and reports a performance figure of merit (FOM)
 
-if [ "$1" = "performance" ]; then
+if [ "$MODE" = "performance" ]; then
 
 # Select XXL benchmark problem
 cd ${TEST_DIR}/openmc_offloading_benchmarks/progression_tests/XXL
@@ -203,7 +228,7 @@ TEST_LOG=log.txt
 rm -f ${TEST_LOG}
 
 # Program Launch
-openmc --event &>> ${TEST_LOG}
+openmc --event --no-sort-surface-crossing &>> ${TEST_LOG}
 cat ${TEST_LOG}
 
 # Begin Result Validation
