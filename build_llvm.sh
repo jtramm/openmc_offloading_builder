@@ -59,3 +59,34 @@ cmake \
 #ninja -j32
 #ninja install
 make -j32 install
+
+# Once installed, you'll need to update your environment as:
+
+# export PATH=/path/to/llvm-install/bin:$PATH
+# export LD_LIBRARY_PATH=/path/to/llvm-install/lib:$LD_LIBRARY_PATH
+# export LIBRARY_PATH=/path/to/llvm-install/lib:$LIBRARY_PATH
+
+# When running the compiler on NVIDIA, you'll also need to load CUDA:
+
+# module load cuda
+
+# When running the compiler on AMD, you'll also need to load ROCM, e.g.:
+
+# module load rocm/6.0.0
+
+# Example of a module file you might create to make the installation easier:
+
+#%Module
+
+# proc ModulesHelp { } {
+#    puts stderr "This module adds LLVM with OpenMP Offloading to your path"
+# }
+# 
+# module-whatis "This module adds LLVM with OpenMP Offloading to your path\n"
+# 
+# set basedir "/path/to/llvm-install"
+# prepend-path PATH "${basedir}/bin"
+# prepend-path LD_LIBRARY_PATH "${basedir}/lib"
+# prepend-path LIBRARY_PATH "${basedir}/lib"
+# module load cuda
+# module load rocm/6.0.0
