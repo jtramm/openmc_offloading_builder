@@ -24,7 +24,7 @@ module load rocm/6.0.0
 
 # These are the options we will set for this build
 PROJECTS="clang;lld"
-RUNTIMES="openmp"
+RUNTIMES="openmp;offload"
 TARGETS="all"
 USE_CCACHE=OFF
 
